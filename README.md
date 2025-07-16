@@ -396,12 +396,9 @@ Once both the backend and frontend applications are running:
 -   **Debouncing:** Implemented on the frontend filter input to prevent excessive API calls and improve user experience during typing.
 -   **Controlled Components (React):** All form elements are controlled by React state, ensuring predictable behavior and easier validation.
 -   **User Feedback (Toast Notifications):** Replaces disruptive `alert()` calls with `react-toastify` for a non-blocking, customizable, and visually appealing way to inform users about success or error states.
+-   **Explicit Singleton Pattern (`ConfigurationManager`):** As per requirements, the Singleton pattern is explicitly demonstrated in the `ConfigurationManager` utility class. This class ensures only one instance of itself is created throughout the application's lifecycle, providing a single global point of access for application-wide configurations (e.g., application version, API base URL). This is achieved through a private constructor and a public static `getInstance()` method, ensuring thread-safe instantiation. While Spring's default bean scope is singleton and typically preferred for managing most application components due to its integration with dependency injection, this explicit implementation serves as a clear example of the pattern's mechanics.
 
 ---
-
-## 14. Team Members
-
-[List your team members again if required.]
 
 ---
 
