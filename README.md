@@ -400,7 +400,7 @@ Once both the backend and frontend applications are running:
 
 ---
 
-## 15. References
+## 14. References
 
 -   Spring Boot Documentation: [https://spring.io/guides/](https://spring.io/guides/)
 -   React Documentation: [https://react.dev/](https://react.dev/)
