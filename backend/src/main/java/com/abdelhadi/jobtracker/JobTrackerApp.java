@@ -9,4 +9,3 @@ public class JobTrackerApp {
         SpringApplication.run(JobTrackerApp.class, args);
     }
 }
-

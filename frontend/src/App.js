@@ -1,64 +1,79 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { fetchAllJobs, deleteJob } from './api/jobApi';
-import JobList from "./components/jobList";
+// frontend/src/App.js
+import React, { useState, useEffect } from 'react';
+import Login from './auth/Login';
+import Register from './auth/Register';
 import JobForm from "./components/jobForm";
-import Login from "./auth/Login";
-import Register from "./auth/Register";
+import JobList from "./components/jobList";
+import JobStats from "./components/jobStats";
+import { ToastContainer } from 'react-toastify'; // Import ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Import toastify CSS
+
 import "./App.css"
 
 function App() {
-  const [jobs, setJobs] = useState([]);
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
-  const [mode, setMode] = useState('login'); // 'login' or 'register'
-
-  const loadJobs = useCallback(() => {
-  if (user) {
-    fetchAllJobs(user.id).then(res => setJobs(res.data));
-  }
-}, [user]);
+  const [user, setUser] = useState(null);
+  const [mode, setMode] = useState('login');
+  const [jobListRefreshKey, setJobListRefreshKey] = useState(0);
 
   useEffect(() => {
-    loadJobs();
-  }, [loadJobs]);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
-  const handleDelete = async (id) => {
-    await deleteJob(id);
-    loadJobs();
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setMode('jobs');
+    setJobListRefreshKey(prev => prev + 1);
   };
 
-  const logout = () => {
+  const handleRegister = (userData) => {
+    setUser(userData);
+    setMode('jobs');
+    setJobListRefreshKey(prev => prev + 1);
+  };
+
+  const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    setJobs([]);
+    setMode('login');
+    setJobListRefreshKey(0);
   };
 
-  if (!user) {
-    
-    return (
-    <div className="auth-container"> {/* Changed this class */}
-        {mode === 'login' ? (
-        <>
-            <Login onLogin={setUser} />
-            <p>Don't have an account? <button onClick={() => setMode('register')}>Register</button></p>
-        </>
-        ) : (
-        <>
-            <Register onRegister={setUser} />
-            <p>Already have an account? <button onClick={() => setMode('login')}>Login</button></p>
-        </>
-        )}
-    </div>
-    );
-  }
+  const handleJobChange = () => {
+    setJobListRefreshKey(prev => prev + 1);
+  };
 
   return (
     <div className="container">
-      <h1>🎯 Job Tracker</h1>
-      <button onClick={logout}>Logout</button>
-      <JobForm onJobAdded={loadJobs} />
-      <div className="job-list">
-        <JobList jobs={jobs} onDelete={handleDelete} />
-      </div>
+      <h1>Job Application Tracker 🎯</h1>
+
+      {user ? (
+        <>
+          <p>Welcome, {user.name}!</p>
+          <button onClick={handleLogout} className="logout-button">Logout</button>
+
+          <JobForm user={user} onJobAdd={handleJobChange} />
+          <JobStats userId={user.id} key={`stats-${jobListRefreshKey}`} />
+          <JobList user={user} onJobChange={handleJobChange} key={`list-${jobListRefreshKey}`} />
+        </>
+      ) : (
+        <div className="auth-container">
+          {mode === 'login' ? (
+            <>
+              <Login onLogin={handleLogin} />
+              <p>Don't have an account? <button onClick={() => setMode('register')}>Register</button></p>
+            </>
+          ) : (
+            <>
+              <Register onRegister={handleRegister} />
+              <p>Already have an account? <button onClick={() => setMode('login')}>Login</button></p>
+            </>
+          )}
+        </div>
+      )}
+      <ToastContainer /> {/* Add this component */}
     </div>
   );
 }

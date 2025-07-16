@@ -2,52 +2,54 @@ package com.abdelhadi.jobtracker.service;
 
 import com.abdelhadi.jobtracker.dao.JobDAO;
 import com.abdelhadi.jobtracker.model.JobApplication;
+import org.springframework.stereotype.Service; // Import @Service
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
+@Service // Mark as a Spring Service
 public class JobService {
     private final JobDAO jobDAO;
-    private List<JobApplication> applications;
 
-    public JobService(JobDAO jobDAO) {
+    // Constructor for Dependency Injection
+    public JobService(JobDAO jobDAO) { // Spring will inject JobDAOImpl
         this.jobDAO = jobDAO;
-        this.applications = new ArrayList<>();
-//        this.applications = jobDAO.loadAll();
     }
 
+    // Ensure all methods operate directly on the DAO for the specific userId
     public void addJob(JobApplication job) {
-        applications.add(job);
+        if (job.getId() == null || job.getId().isEmpty()) {
+            job.setId(UUID.randomUUID().toString()); // Assign ID if new
+        }
+        jobDAO.save(job); // Save individual job
     }
 
     public void removeJob(String id) {
-        System.out.println(id);
         jobDAO.deleteById(id);
-//        applications.removeIf(job -> job.getId().equals(id));
-    }
-
-    public List<JobApplication> filterByStatus(String status) {
-        return applications.stream()
-                .filter(job -> job.getStatus().equalsIgnoreCase(status))
-                .collect(Collectors.toList());
-    }
-
-    public List<JobApplication> sortByDeadline() {
-        return applications.stream()
-                .sorted(Comparator.comparing(JobApplication::getDeadline))
-                .collect(Collectors.toList());
-    }
-
-    public Map<String, Long> groupByStatus() {
-        return applications.stream()
-                .collect(Collectors.groupingBy(JobApplication::getStatus, Collectors.counting()));
     }
 
     public List<JobApplication> getAllJobs(String userId) {
         return jobDAO.loadAll(userId);
     }
 
-    public void saveAll() {
-        jobDAO.saveAll(applications);
+    // --- New Service Methods for User Stories ---
+
+    // 1. Filter jobs by tech stack
+    public List<JobApplication> filterJobsByTechStack(String userId, String techStack) {
+        return jobDAO.filterByTechStack(userId, techStack);
     }
+
+    // 2. Sort applications by deadline
+    public List<JobApplication> sortJobsByDeadline(String userId) {
+        return jobDAO.sortByDeadline(userId);
+    }
+
+    // 3. Get grouped stats
+    public Map<String, Long> getJobStatusStats(String userId) {
+        return jobDAO.getJobStatsByStatus(userId);
+    }
+
+    // The saveAll method from previous version is removed as individual save is handled
+    // within addJob now, and deleteJob also directly uses DAO.
 }

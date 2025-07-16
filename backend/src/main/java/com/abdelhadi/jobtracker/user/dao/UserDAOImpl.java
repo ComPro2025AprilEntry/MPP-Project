@@ -1,69 +1,59 @@
 package com.abdelhadi.jobtracker.user.dao;
 
 import com.abdelhadi.jobtracker.user.model.User;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
-import java.sql.*;
-import java.util.UUID;
+import javax.sql.DataSource; // Import DataSource
 
+@Repository // Mark as a Spring Data Repository
 public class UserDAOImpl implements UserDAO {
-    private static UserDAOImpl instance;
-    private final Connection conn;
 
-    private UserDAOImpl() {
-        try {
-            conn = DriverManager.getConnection("jdbc:h2:./jobtrackerdb", "sa", "");
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS users (
-                        id VARCHAR(255) PRIMARY KEY,
-                        name VARCHAR(255),
-                        email VARCHAR(255) UNIQUE,
-                        password VARCHAR(255)
-                    )
-                """);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to connect to DB", e);
-        }
+    private final JdbcTemplate jdbcTemplate;
+
+    // Constructor for Dependency Injection
+    // Spring will automatically inject the DataSource (configured by Spring Boot)
+    public UserDAOImpl(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        initializeTable(); // Call initialization method
     }
 
-    public static UserDAOImpl getInstance() {
-        if (instance == null) instance = new UserDAOImpl();
-        return instance;
+    private void initializeTable() {
+        // Create the users table if it doesn't exist
+        jdbcTemplate.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id VARCHAR(255) PRIMARY KEY,
+                name VARCHAR(255),
+                email VARCHAR(255) UNIQUE,
+                password VARCHAR(255)
+            )
+        """);
     }
+
+    // RowMapper for User objects to simplify ResultSet mapping
+    private final RowMapper<User> userRowMapper = (rs, rowNum) -> new User(
+            rs.getString("id"),
+            rs.getString("name"),
+            rs.getString("email"),
+            rs.getString("password")
+    );
 
     @Override
     public void register(User user) {
         String sql = "INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, user.getId());
-            ps.setString(2, user.getName());
-            ps.setString(3, user.getEmail());
-            ps.setString(4, user.getPassword());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("User registration failed", e);
-        }
+        jdbcTemplate.update(sql, user.getId(), user.getName(), user.getEmail(), user.getPassword());
     }
 
     @Override
     public User findByEmail(String email) {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return new User(
-                            rs.getString("id"),
-                            rs.getString("name"),
-                            rs.getString("email"),
-                            rs.getString("password")
-                    );
-                }
-                return null;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find user by email", e);
+        String sql = "SELECT id, name, email, password FROM users WHERE email = ?";
+        // queryForObject will throw EmptyResultDataAccessException if no row found.
+        // We'll catch that and return null, matching previous behavior.
+        try {
+            return jdbcTemplate.queryForObject(sql, userRowMapper, email);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return null;
         }
     }
 }
-

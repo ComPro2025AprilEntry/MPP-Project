@@ -3,23 +3,18 @@ package com.abdelhadi.jobtracker.model;
 import java.time.LocalDate;
 import java.util.List;
 
-import java.time.LocalDate;
-import java.util.List;
-
 public class JobApplication {
     private String id;
     private String company;
     private String position;
-    private List<String> techStack;
+    private List<String> techStack; // Handled as comma-separated string in DAO
     private LocalDate appliedDate;
     private LocalDate deadline;
     private String status;
     private String userId;
 
-    // Default constructor required for deserialization
     public JobApplication() {}
 
-    // Existing constructor
     public JobApplication(String id, String company, String position, List<String> techStack,
                           LocalDate appliedDate, LocalDate deadline, String status, String userId) {
         this.id = id;
@@ -32,7 +27,6 @@ public class JobApplication {
         this.userId = userId;
     }
 
-    // Add getters & setters for all fields (Jackson needs them)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -57,5 +51,3 @@ public class JobApplication {
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 }
-
-
