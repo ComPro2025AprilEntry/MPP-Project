@@ -1,0 +1,298 @@
+:root {
+    /* Color Palette */
+    --primary-blue: #4a90e2;
+    --primary-blue-dark: #357abd;
+    --secondary-green: #5cb85c;
+    --text-dark: #333;
+    --text-light: #666;
+    --background-light: #f8f9fa;
+    --background-card: #ffffff;
+    --border-light: #e0e0e0;
+    --shadow-subtle: rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: "Inter", "Segoe UI", sans-serif; /* Prioritize a modern font like Inter, fallback to Segoe UI */
+    background: var(--background-light);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+    color: var(--text-dark);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 700px; /* Slightly narrower for a cleaner look */
+    width: 100%;
+    margin: auto;
+    padding: 30px; /* Increased padding */
+    background: var(--background-card);
+    border-radius: 12px; /* More rounded corners */
+    box-shadow: 0 4px 20px var(--shadow-subtle); /* More pronounced shadow */
+}
+
+h1 {
+    text-align: center;
+    color: var(--primary-blue);
+    margin-bottom: 30px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+h2 {
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 10px;
+}
+
+/* Authentication Forms (Login/Register) */
+.auth-container {
+    padding: 30px;
+    background: var(--background-card);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px var(--shadow-subtle);
+    max-width: 400px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.auth-container h2 {
+    margin-bottom: 25px;
+    border-bottom: none;
+    font-size: 1.8rem;
+    color: var(--primary-blue);
+}
+
+.auth-container p {
+    margin-top: 20px;
+    color: var(--text-light);
+}
+
+.auth-container p button {
+    background: none;
+    border: none;
+    color: var(--primary-blue);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    transition: color 0.2s ease-in-out;
+}
+
+.auth-container p button:hover {
+    color: var(--primary-blue-dark);
+}
+
+/* Forms (JobForm, Login, Register) */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Increased gap */
+    margin-bottom: 40px; /* More space below form */
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background-color: var(--background-light);
+}
+
+input,
+select {
+    padding: 12px 15px; /* More padding for better touch targets */
+    font-size: 1rem;
+    border-radius: 8px; /* Slightly more rounded */
+    border: 1px solid var(--border-light);
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    width: calc(100% - 30px); /* Account for padding */
+}
+
+input:focus,
+select:focus {
+    border-color: var(--primary-blue);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); /* Subtle focus ring */
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 1.05rem;
+    border-radius: 8px;
+    background-color: var(--primary-blue);
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    margin-top: 10px; /* Space above button */
+}
+
+button:hover {
+    background-color: var(--primary-blue-dark);
+    transform: translateY(-1px); /* Subtle lift effect */
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Specific button styles for logout */
+.container > button {
+    /* Targets the logout button directly under .container */
+    display: block;
+    margin: -15px auto 30px auto; /* Adjust position relative to title */
+    width: fit-content;
+    background-color: #dc3545; /* Red for logout */
+}
+
+.container > button:hover {
+    background-color: #c82333;
+}
+
+/* Job Card List 
+.job-list {
+    display: grid;
+    gap: 15px; 
+} */
+
+.job-list {
+    display: grid;
+    gap: 15px; /* Space between job cards */
+    /* Add this for larger screens */
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(280px, 1fr)
+    ); /* Adjust minmax value as needed */
+    padding-top: 10px; /* Optional: adds a little space above the grid */
+}
+
+.job-card {
+    border: 1px solid var(--border-light);
+    background: var(--background-card);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.job-card:hover {
+    transform: translateY(-3px); /* Subtle lift on hover */
+    box-shadow: 0 6px 20px var(--shadow-subtle);
+}
+
+.job-card h3 {
+    margin: 0 0 5px 0;
+    color: var(--primary-blue);
+    font-size: 1.3rem;
+}
+
+.job-card p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.job-card p strong {
+    color: var(--text-dark);
+}
+
+.job-card button {
+    align-self: flex-end; /* Align delete button to the right */
+    margin-top: 10px;
+    background-color: #f0ad4e; /* Orange for delete */
+}
+
+.job-card button:hover {
+    background-color: #ec971f;
+}
+
+/* Target error messages specifically within forms or auth containers */
+form .error-message,
+.auth-container .error-message {
+    color: #dc3545; /* A standard red for error messages */
+    font-size: 0.9em;
+    margin-top: -5px;
+    margin-bottom: 10px;
+    text-align: left;
+    padding-left: 5px;
+    font-weight: 500; /* Added this for better visibility */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    h2 {
+        font-size: 1.3rem;
+    }
+
+    form {
+        padding: 15px;
+    }
+
+    input,
+    select,
+    button {
+        font-size: 0.95rem;
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    .auth-container {
+        padding: 20px;
+        margin: 20px auto;
+    }
+
+    .auth-container h2 {
+        font-size: 1.6rem;
+    }
+
+    form {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .job-card {
+        padding: 15px;
+    }
+
+    .job-card h3 {
+        font-size: 1.1rem;
+    }
+
+    .job-card p {
+        font-size: 0.9rem;
+    }
+}
