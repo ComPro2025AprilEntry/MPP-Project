@@ -1,10 +1,10 @@
 // frontend/src/components/jobList.js
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAllJobs, deleteJob, filterJobsByTechStack, sortJobsByDeadline, filterJobsByStatus } from '../api/jobApi';
 import { toast } from 'react-toastify';
 
 function JobList({ user, onJobChange, onJobSelected }) {
-  // ... (rest of your state variables remain the same)
   const [jobs, setJobs] = useState([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -12,11 +12,11 @@ function JobList({ user, onJobChange, onJobSelected }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedFilterTechStack, setDebouncedFilterTechStack] = useState('');
   const [sortOption, setSortOption] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(''); // State for status filter
 
   const userId = user?.id;
 
-  // ... (useEffect for debouncing remains the same)
+  // Debounce effect for tech stack search
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedFilterTechStack(searchTerm);
@@ -27,7 +27,7 @@ function JobList({ user, onJobChange, onJobSelected }) {
     };
   }, [searchTerm]);
 
-  // ... (loadJobs useCallback remains the same)
+  // Function to load jobs based on current filters and sort options
   const loadJobs = useCallback(async () => {
     if (!userId) {
       setInitialLoading(false);
@@ -36,20 +36,24 @@ function JobList({ user, onJobChange, onJobSelected }) {
     }
 
     if (jobs.length === 0 && !initialLoading && !isFetching) {
-      setInitialLoading(true);
+        setInitialLoading(true);
     }
     setIsFetching(true);
     setError('');
 
     try {
       let response;
+      // The order here ensures that only one primary filter/sort is active at a time,
+      // as the onChange handlers for each input clear the other filter states.
       if (debouncedFilterTechStack) {
         response = await filterJobsByTechStack(userId, debouncedFilterTechStack);
       } else if (statusFilter) {
+        // This condition will be met when a status is selected and no tech stack filter is active.
         response = await filterJobsByStatus(userId, statusFilter);
       } else if (sortOption === 'deadline') {
         response = await sortJobsByDeadline(userId);
       } else {
+        // Default: fetch all jobs if no specific filters/sorts are applied
         response = await fetchAllJobs(userId);
       }
       setJobs(response.data);
@@ -61,16 +65,15 @@ function JobList({ user, onJobChange, onJobSelected }) {
       setInitialLoading(false);
       setIsFetching(false);
     }
-  }, [userId, initialLoading, isFetching, jobs.length, debouncedFilterTechStack, sortOption, statusFilter]);
+  }, [userId, initialLoading, isFetching, jobs.length, debouncedFilterTechStack, sortOption, statusFilter]); // statusFilter is correctly a dependency
 
+  // Effect to trigger loading jobs when dependencies change
   useEffect(() => {
     loadJobs();
   }, [loadJobs]);
 
-
   const confirmDeleteToast = (jobId, onConfirm, onCancel) => {
-    // Add a defensive check for toast.POSITION
-    const position = toast && toast.POSITION ? toast.POSITION.TOP_CENTER : 'top-center'; // Fallback to string if needed for debugging
+    const position = toast && toast.POSITION ? toast.POSITION.TOP_CENTER : 'top-center';
 
     toast.warn(
       ({ closeToast }) => (
@@ -118,7 +121,7 @@ function JobList({ user, onJobChange, onJobSelected }) {
         closeButton: false,
         draggable: false,
         closeOnClick: false,
-        position: position, // <--- MODIFIED: Use the 'position' variable
+        position: position,
         className: 'custom-toast-confirm'
       }
     );
@@ -143,7 +146,6 @@ function JobList({ user, onJobChange, onJobSelected }) {
     );
   };
 
-  // ... (getStatusColor function remains the same)
   const getStatusColor = (status) => {
     switch (status) {
       case 'Applied': return '#A3D9FF';
@@ -172,20 +174,24 @@ function JobList({ user, onJobChange, onJobSelected }) {
           type="text"
           placeholder="Filter by Tech Stack..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setStatusFilter(''); // Clear status filter when typing in tech stack
+            setSortOption(''); // Clear sort when typing in tech stack
+          }}
           className="filter-input"
         />
         <select
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
-            setSearchTerm('');
+            setSearchTerm(''); // Clear tech stack filter when changing status
             setDebouncedFilterTechStack('');
-            setSortOption('');
+            setSortOption(''); // Clear sort when changing status
           }}
           className="filter-select"
         >
-          <option value="">All Statuses</option>
+          <option value="">All Statuses</option> {/* Value for "All Statuses" should be empty string */}
           <option value="Applied">Applied</option>
           <option value="Interviewing">Interviewing</option>
           <option value="Offer">Offer</option>
@@ -195,9 +201,9 @@ function JobList({ user, onJobChange, onJobSelected }) {
         <button
           onClick={() => {
             setSortOption(sortOption === 'deadline' ? '' : 'deadline');
-            setSearchTerm('');
+            setSearchTerm(''); // Clear tech stack filter when sorting
             setDebouncedFilterTechStack('');
-            setStatusFilter('');
+            setStatusFilter(''); // Clear status filter when sorting
           }}
           className={`sort-button ${sortOption === 'deadline' ? 'active' : ''}`}
         >
@@ -223,11 +229,12 @@ function JobList({ user, onJobChange, onJobSelected }) {
           {jobs.map(job => (
             <div key={job.id} className="job-card">
               <div className="job-card-header">
-                <h4 className="job-title">{job.position}</h4>
+                <h4 className="job-title">{job.company} - {job.position}</h4>
                 <span className="job-status" style={{ backgroundColor: getStatusColor(job.status) }}>{job.status}</span>
               </div>
-              <p className="job-company">{job.company}</p>
-              <p className="job-deadline">Deadline: {job.deadline || 'N/A'}</p>
+              <p><strong>Tech Stack:</strong> {job.techStack && job.techStack.length > 0 ? job.techStack.join(', ') : 'N/A'}</p>
+              <p><strong>Applied Date:</strong> {job.appliedDate}</p>
+              <p><strong>Deadline:</strong> {job.deadline || 'N/A'}</p>
               <div className="job-card-actions">
                 <button onClick={() => onJobSelected(job)} className="view-edit-button">View/Edit</button>
                 <button onClick={() => handleDelete(job.id)} className="delete-button">Delete</button>

@@ -1,52 +1,73 @@
-// src/api/jobApi.js
+// frontend/src/api/jobApi.js
+
 import axios from 'axios';
 
-// Ensure this matches your backend URL.
-// During development, it's 'http://localhost:8080/api'.
-// For deployment, it will be your deployed backend URL (e.g., from Vercel env variable).
-// Using process.env.REACT_APP_API_BASE_URL is best practice for deployment.
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+// Update API_URL to match your backend's base mapping
+const API_URL = 'http://localhost:8080/api/jobs'; // ⭐⭐ IMPORTANT: Ensure this matches your JobController @RequestMapping("/api/jobs") ⭐⭐
+const AUTH_URL = 'http://localhost:8080/api/auth';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-// Helper for authenticated requests (e.g., for userId in headers)
-const getConfig = (userId) => {
-    return userId ? { headers: { 'X-User-Id': userId } } : {};
+const getAuthHeaders = (userId) => {
+    return {
+        'X-User-Id': userId, // ⭐⭐ Use X-User-Id as per your JobController @RequestHeader ⭐⭐
+    };
 };
 
-// Job Application Endpoints
-export const fetchAllJobs = (userId) => api.get(`/jobs?userId=${userId}`);
-export const addJob = (job) => api.post('/jobs', job);
-
-// Corrected deleteJob to send userId in header as required by backend
-export const deleteJob = (id, userId) => api.delete(`/jobs/${id}`, getConfig(userId));
-
-// NEW: Update Job Function - Now Exported!
-// Corresponds to PUT /api/jobs/{id}
-export const updateJob = (job, userId) => {
-    // Backend expects id in path, job object in body, and userId in header
-    return api.put(`/jobs/${job.id}`, job, getConfig(userId));
+export const registerUser = async (userData) => {
+    return axios.post(`${AUTH_URL}/register`, userData);
 };
 
-export const getJobById = (id, userId) => {
-    return api.get(`/jobs/${id}`, getConfig(userId));
+export const loginUser = async (credentials) => {
+    return axios.post(`${AUTH_URL}/login`, credentials);
 };
 
-// Filtering, Sorting, and Stats Endpoints
-export const filterJobsByTechStack = (userId, techStack) => {
-    return api.get(`/jobs/filter`, { params: { userId, techStack } });
+export const fetchAllJobs = async (userId) => {
+    // Now uses a query parameter for userId
+    return axios.get(API_URL, { params: { userId }, headers: getAuthHeaders(userId) });
 };
 
-export const filterJobsByStatus = (userId, status) => {
-    return api.get(`/jobs/filter`, { params: { userId, status } });
+export const addJob = async (jobData) => { // userId is now part of jobData
+    return axios.post(API_URL, jobData); // userId should be set in jobData already
 };
 
-export const sortJobsByDeadline = (userId) => {
-    return api.get(`/jobs/sorted-by-deadline`, { params: { userId } });
+export const updateJob = async (id, jobData, userId) => {
+    return axios.put(`${API_URL}/${id}`, jobData, { headers: getAuthHeaders(userId) }); // Send userId in header for update
 };
 
-export const getJobStats = (userId) => {
-    return api.get(`/jobs/stats`, { params: { userId } });
+export const deleteJob = async (id, userId) => {
+    return axios.delete(`${API_URL}/${id}`, { headers: getAuthHeaders(userId) });
+};
+
+export const filterJobsByTechStack = async (userId, techStack) => {
+    return axios.get(`${API_URL}/filter`, {
+        params: { userId, techStack }, // Send as query parameters
+        headers: getAuthHeaders(userId)
+    });
+};
+
+export const sortJobsByDeadline = async (userId) => {
+    return axios.get(`${API_URL}/sorted-by-deadline`, {
+        params: { userId }, // Send as query parameter
+        headers: getAuthHeaders(userId)
+    });
+};
+
+// ⭐⭐ ADD/CONFIRM THIS FUNCTION IN jobApi.js ⭐⭐
+export const filterJobsByStatus = async (userId, status) => {
+    try {
+        const response = await axios.get(`${API_URL}/filter`, { // Calls the /filter endpoint
+            params: { userId, status }, // Sends status as a query parameter
+            headers: getAuthHeaders(userId)
+        });
+        return response;
+    } catch (error) {
+        console.error('Error filtering jobs by status:', error);
+        throw error;
+    }
+};
+
+export const getJobStats = async (userId) => {
+    return axios.get(`${API_URL}/stats`, {
+        params: { userId }, // Send as query parameter
+        headers: getAuthHeaders(userId)
+    });
 };

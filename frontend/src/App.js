@@ -18,7 +18,7 @@ function App() {
 
   // State for modal and editing
   const [selectedJob, setSelectedJob] = useState(null); // Stores job for details modal
-  const [jobToEdit, setJobToEdit] = useState(null);    // Stores job for editing in the form
+  const [jobToEdit, setJobToEdit] = useState(null);     // Stores job for editing in the form
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -50,10 +50,10 @@ function App() {
     setSelectedJob(null); // Clear any selected job
   };
 
-  // This function is called when a job is added or updated, or deleted
+  // This function is called when a job is added, updated, or deleted
   const handleJobChange = () => {
     setJobListRefreshKey(prev => prev + 1); // Increment key to trigger re-fetches
-    setJobToEdit(null); // Exit edit mode
+    setJobToEdit(null); // Exit edit mode by clearing the jobToEdit state
     setSelectedJob(null); // Close modal if open
   };
 
@@ -81,12 +81,12 @@ function App() {
           <p>Welcome, {user.name}!</p>
           <button onClick={handleLogout} className="logout-button">Logout</button>
 
-          {/* Render JobForm for adding/editing */}
+          {/* Render JobForm for adding/editing. If jobToEdit is set, the form will pre-populate. */}
           <JobForm
             user={user}
-            onJobAdd={handleJobChange}
+            onJobAdd={handleJobChange} // Called after a new job is added
             jobToEdit={jobToEdit} // Pass job if in edit mode
-            onJobEditComplete={handleJobChange} // Call handleJobChange after edit
+            onJobEditComplete={handleJobChange} // Called after an existing job is edited
           />
 
           {/* Display Job Statistics */}
@@ -95,8 +95,8 @@ function App() {
           {/* Display Job List */}
           <JobList
             user={user}
-            onJobChange={handleJobChange} // Pass this to refresh list on delete
-            onJobSelected={handleJobSelectedForDetails} // Pass handler for selecting a job
+            onJobChange={handleJobChange} // Pass this to refresh list on delete/add/edit
+            onJobSelected={handleJobSelectedForDetails} // Pass handler for selecting a job to view details
             key={`list-${jobListRefreshKey}`} // Key to force re-render on changes
           />
 
@@ -104,7 +104,7 @@ function App() {
           {selectedJob && (
             <JobDetailsModal
               job={selectedJob}
-              onClose={handleCloseJobDetails}
+              onClose={handleCloseJobDetails} // Pass handler to close the modal
               onEdit={handleEditFromModal} // Pass handler for editing from modal
             />
           )}
@@ -124,6 +124,7 @@ function App() {
           )}
         </div>
       )}
+      {/* Global ToastContainer for notifications */}
       <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>
   );

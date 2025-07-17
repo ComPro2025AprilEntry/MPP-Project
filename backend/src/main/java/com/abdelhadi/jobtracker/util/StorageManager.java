@@ -12,19 +12,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList; // Thread-safe list
 
-// This class demonstrates the classic explicit Singleton pattern for managing
-// file-based persistence of JobApplications.
-// It is intended as an alternative/supplementary storage mechanism for demonstration,
-// distinct from the Spring-managed JDBC JobDAOImpl.
-public final class StorageManager { // 'final' prevents subclassing
+// This class demonstrates the Singleton pattern using an enum,
+// providing a concise, thread-safe, and serialization-safe approach
+// for managing file-based persistence of JobApplications.
+public enum StorageManager {
+    // The single instance of our StorageManager
+    INSTANCE;
 
-    private static StorageManager instance; // The single instance
     private final File storageFile;
     private final ObjectMapper objectMapper;
     private final List<JobApplication> inMemoryJobs; // Simple in-memory cache
 
-    // Private constructor to prevent direct instantiation
-    private StorageManager() {
+    // The constructor for the enum is implicitly private
+    StorageManager() {
         this.storageFile = new File("job_applications.json"); // Name of your storage file
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule()); // For LocalDate serialization
@@ -34,16 +34,7 @@ public final class StorageManager { // 'final' prevents subclassing
 
         // Load existing data on initialization
         loadJobsFromFile();
-        System.out.println("StorageManager: Initializing and loading jobs from " + storageFile.getName());
-    }
-
-    // Public static method to get the single instance
-    // 'synchronized' ensures thread safety during first initialization
-    public static synchronized StorageManager getInstance() {
-        if (instance == null) {
-            instance = new StorageManager();
-        }
-        return instance;
+        System.out.println("StorageManager (Enum): Initializing and loading jobs from " + storageFile.getName());
     }
 
     // --- Persistence Methods ---
@@ -56,10 +47,9 @@ public final class StorageManager { // 'final' prevents subclassing
 
         try {
             objectMapper.writeValue(storageFile, jobs);
-            System.out.println("StorageManager: Saved " + jobs.size() + " jobs to " + storageFile.getName());
+            System.out.println("StorageManager (Enum): Saved " + jobs.size() + " jobs to " + storageFile.getName());
         } catch (IOException e) {
-            System.err.println("StorageManager: Failed to save jobs: " + e.getMessage());
-            // In a real app, you'd log this more robustly or throw a custom exception
+            System.err.println("StorageManager (Enum): Failed to save jobs: " + e.getMessage());
         }
     }
 
@@ -68,7 +58,7 @@ public final class StorageManager { // 'final' prevents subclassing
         if (inMemoryJobs.isEmpty() && storageFile.exists() && storageFile.length() > 0) {
             loadJobsFromFile(); // Ensure in-memory is populated if it's empty but file exists
         }
-        System.out.println("StorageManager: Returning " + inMemoryJobs.size() + " jobs from memory/file.");
+        System.out.println("StorageManager (Enum): Returning " + inMemoryJobs.size() + " jobs from memory/file.");
         return new ArrayList<>(inMemoryJobs); // Return a copy to prevent external modification
     }
 
@@ -79,8 +69,7 @@ public final class StorageManager { // 'final' prevents subclassing
                 this.inMemoryJobs.clear();
                 this.inMemoryJobs.addAll(Arrays.asList(loadedArray));
             } catch (IOException e) {
-                System.err.println("StorageManager: Failed to load jobs from file: " + e.getMessage());
-                // Handle corrupted file or other read errors
+                System.err.println("StorageManager (Enum): Failed to load jobs from file: " + e.getMessage());
             }
         }
     }

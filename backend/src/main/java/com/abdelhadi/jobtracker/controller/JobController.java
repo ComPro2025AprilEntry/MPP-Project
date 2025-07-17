@@ -89,12 +89,4 @@ public class JobController {
     public Map<String, Long> getJobStats(@RequestParam String userId) {
         return jobService.getJobStatusStats(userId);
     }
-
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<JobApplication>> getApplicationsByStatus(
-            @RequestHeader("X-User-ID") Long userId,
-            @PathVariable String status) {
-        List<JobApplication> applications = jobService.getJobStatusStats(userId, status);
-        return ResponseEntity.ok(applications);
-    }
 }

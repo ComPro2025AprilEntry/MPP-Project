@@ -159,15 +159,4 @@ public class JobDAOImpl implements JobDAO {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId);
         return (count != null) ? count : 0;
     }
-
-    @Override
-    public List<JobApplication> findByUserIdAndStatus(Long userId, String status) {
-        return List.of();
-    }
-
-    @Override
-    public List<JobApplication> findByUserIdAndStatus(String userId, String status) {
-        String sql = "SELECT id, company, position, tech_stack, applied_date, deadline, status, user_id FROM applications WHERE user_id = ? AND status = ?";
-        return jdbcTemplate.query(sql, jobRowMapper, userId, status);
-    }
 }
