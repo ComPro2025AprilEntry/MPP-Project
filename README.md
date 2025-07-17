@@ -92,6 +92,8 @@ The system is designed to meet the following user needs:
 
 ## 5. Architecture of Project
 
+![System Architecture](/frontend/resources/System%20Architecture.png)
+
 ### 5.1 Overview
 
 The project follows a standard **Layered Architecture** (also known as N-tier architecture), separating concerns into distinct logical layers. This promotes modularity, maintainability, and scalability.
