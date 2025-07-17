@@ -222,7 +222,7 @@ Here are detailed descriptions for some key use cases:
 
 ## 8. Class Diagram
 
-[Class Diagram](/frontend//resources/Class%20Diagram.png)
+![Class Diagram](/frontend//resources/Class%20Diagram.png)
 
 **Key Classes:**
 
@@ -238,9 +238,9 @@ Here are detailed descriptions for some key use cases:
 
 ## 9. Sequence Diagrams
 
-[Sequence Diagram 01](/frontend//resources//Sequence%20Diagram%2001.png)
-[Sequence Diagram 02](/frontend//resources/Sequence%20Diagram%2002.png)
-[Sequence Diagram 02](/frontend//resources/Sequence%20Diagram%2003.png)
+![Sequence Diagram 01](/frontend//resources//Sequence%20Diagram%2001.png)
+![Sequence Diagram 02](/frontend//resources/Sequence%20Diagram%2002.png)
+![Sequence Diagram 02](/frontend//resources/Sequence%20Diagram%2003.png)
 
 **Example Sequence Diagram Description: User Registration**
 
@@ -281,11 +281,11 @@ Here are detailed descriptions for some key use cases:
 
 ## 10. Screenshots
 
-[Screen 01](/frontend//resources/Screen%2001.jpg)
-[Screen 01](/frontend//resources/Screen%2002.jpg)
-[Screen 01](/frontend//resources/Screen%2003.jpg)
-[Screen 01](/frontend//resources/Screen%2004.jpg)
-[Screen 01](/frontend//resources/Screen%2005.jpg)
+![Screen 01](/frontend//resources/Screen%2001.jpg)
+![Screen 02](/frontend//resources/Screen%2002.jpg)
+![Screen 03](/frontend//resources/Screen%2003.jpg)
+![Screen 04](/frontend//resources/Screen%2004.jpg)
+![Screen 05](/frontend//resources/Screen%2005.jpg)
 
 ---
 
