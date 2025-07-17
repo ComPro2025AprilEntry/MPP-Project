@@ -1,9 +1,10 @@
 // frontend/src/components/jobList.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAllJobs, deleteJob, filterJobsByTechStack, sortJobsByDeadline, filterJobsByStatus } from '../api/jobApi';
-import { toast } from 'react-toastify'; // <--- MODIFIED: Removed POSITION from here
+import { toast } from 'react-toastify';
 
 function JobList({ user, onJobChange, onJobSelected }) {
+  // ... (rest of your state variables remain the same)
   const [jobs, setJobs] = useState([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -15,6 +16,7 @@ function JobList({ user, onJobChange, onJobSelected }) {
 
   const userId = user?.id;
 
+  // ... (useEffect for debouncing remains the same)
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedFilterTechStack(searchTerm);
@@ -25,6 +27,7 @@ function JobList({ user, onJobChange, onJobSelected }) {
     };
   }, [searchTerm]);
 
+  // ... (loadJobs useCallback remains the same)
   const loadJobs = useCallback(async () => {
     if (!userId) {
       setInitialLoading(false);
@@ -64,7 +67,11 @@ function JobList({ user, onJobChange, onJobSelected }) {
     loadJobs();
   }, [loadJobs]);
 
+
   const confirmDeleteToast = (jobId, onConfirm, onCancel) => {
+    // Add a defensive check for toast.POSITION
+    const position = toast && toast.POSITION ? toast.POSITION.TOP_CENTER : 'top-center'; // Fallback to string if needed for debugging
+
     toast.warn(
       ({ closeToast }) => (
         <div style={{ textAlign: 'center' }}>
@@ -111,7 +118,7 @@ function JobList({ user, onJobChange, onJobSelected }) {
         closeButton: false,
         draggable: false,
         closeOnClick: false,
-        position: toast.POSITION.TOP_CENTER, // <--- MODIFIED: Used toast.POSITION directly
+        position: position, // <--- MODIFIED: Use the 'position' variable
         className: 'custom-toast-confirm'
       }
     );
@@ -136,6 +143,7 @@ function JobList({ user, onJobChange, onJobSelected }) {
     );
   };
 
+  // ... (getStatusColor function remains the same)
   const getStatusColor = (status) => {
     switch (status) {
       case 'Applied': return '#A3D9FF';
