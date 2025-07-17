@@ -1,7 +1,7 @@
 // frontend/src/components/jobList.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchAllJobs, deleteJob, filterJobsByTechStack, sortJobsByDeadline } from '../api/jobApi';
-import { toast } from 'react-toastify';
+import { fetchAllJobs, deleteJob, filterJobsByTechStack, sortJobsByDeadline, filterJobsByStatus } from '../api/jobApi';
+import { toast } from 'react-toastify'; // <--- MODIFIED: Removed POSITION from here
 
 function JobList({ user, onJobChange, onJobSelected }) {
   const [jobs, setJobs] = useState([]);
@@ -11,14 +11,14 @@ function JobList({ user, onJobChange, onJobSelected }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedFilterTechStack, setDebouncedFilterTechStack] = useState('');
   const [sortOption, setSortOption] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const userId = user?.id;
 
-  // Effect for debouncing the tech stack filter
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedFilterTechStack(searchTerm);
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => {
       clearTimeout(handler);
@@ -40,9 +40,10 @@ function JobList({ user, onJobChange, onJobSelected }) {
 
     try {
       let response;
-      // Filter takes precedence over sort if both are active
       if (debouncedFilterTechStack) {
         response = await filterJobsByTechStack(userId, debouncedFilterTechStack);
+      } else if (statusFilter) {
+        response = await filterJobsByStatus(userId, statusFilter);
       } else if (sortOption === 'deadline') {
         response = await sortJobsByDeadline(userId);
       } else {
@@ -57,34 +58,92 @@ function JobList({ user, onJobChange, onJobSelected }) {
       setInitialLoading(false);
       setIsFetching(false);
     }
-  }, [userId, initialLoading, isFetching, jobs.length, debouncedFilterTechStack, sortOption]);
+  }, [userId, initialLoading, isFetching, jobs.length, debouncedFilterTechStack, sortOption, statusFilter]);
 
   useEffect(() => {
     loadJobs();
   }, [loadJobs]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this job application?")) {
-      try {
-        await deleteJob(id, userId); // Ensure userId is passed for the header
-        toast.success("Job application deleted successfully!");
-        onJobChange(); // Notify App.js to refresh lists/stats
-      } catch (err) {
-        console.error("Error deleting job:", err);
-        toast.error("Failed to delete job application.");
+  const confirmDeleteToast = (jobId, onConfirm, onCancel) => {
+    toast.warn(
+      ({ closeToast }) => (
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: '0 0 15px 0', fontSize: '1rem' }}>Are you sure you want to delete this job application?</p>
+          <button
+            onClick={() => {
+              onConfirm(jobId);
+              closeToast();
+            }}
+            style={{
+              marginRight: '10px',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              padding: '8px 15px',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            Yes, Delete
+          </button>
+          <button
+            onClick={() => {
+              onCancel();
+              closeToast();
+            }}
+            style={{
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              padding: '8px 15px',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeButton: false,
+        draggable: false,
+        closeOnClick: false,
+        position: toast.POSITION.TOP_CENTER, // <--- MODIFIED: Used toast.POSITION directly
+        className: 'custom-toast-confirm'
       }
-    }
+    );
   };
 
-  // Status colors for better visual appeal
+  const handleDelete = async (id) => {
+    confirmDeleteToast(
+      id,
+      async (jobIdToConfirmDelete) => {
+        try {
+          await deleteJob(jobIdToConfirmDelete, userId);
+          toast.success("Job application deleted successfully!");
+          onJobChange();
+        } catch (err) {
+          console.error("Error deleting job:", err);
+          toast.error("Failed to delete job application.");
+        }
+      },
+      () => {
+        toast.info("Deletion cancelled.");
+      }
+    );
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Applied': return '#A3D9FF';       // Soft Light Blue
-      case 'Interviewing': return '#FFECB3';  // Soft Light Amber/Yellow
-      case 'Offer': return '#C8E6C9';         // Soft Light Green
-      case 'Rejected': return '#FFC9C9';      // Soft Light Red/Pink
-      case 'Accepted': return '#5cb85c';      // Reusing --secondary-green from App.css for a definitive success
-      default: return '#D3D3D3';             // Light Grey
+      case 'Applied': return '#A3D9FF';
+      case 'Interviewing': return '#FFECB3';
+      case 'Offer': return '#C8E6C9';
+      case 'Rejected': return '#FFC9C9';
+      case 'Accepted': return '#5cb85c';
+      default: return '#D3D3D3';
     }
   };
 
@@ -100,7 +159,6 @@ function JobList({ user, onJobChange, onJobSelected }) {
     <div className="job-list-container">
       <h3>Your Job Applications</h3>
 
-      {/* Filter and Sort Controls */}
       <div className="job-controls">
         <input
           type="text"
@@ -109,11 +167,29 @@ function JobList({ user, onJobChange, onJobSelected }) {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="filter-input"
         />
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setSearchTerm('');
+            setDebouncedFilterTechStack('');
+            setSortOption('');
+          }}
+          className="filter-select"
+        >
+          <option value="">All Statuses</option>
+          <option value="Applied">Applied</option>
+          <option value="Interviewing">Interviewing</option>
+          <option value="Offer">Offer</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Accepted">Accepted</option>
+        </select>
         <button
           onClick={() => {
             setSortOption(sortOption === 'deadline' ? '' : 'deadline');
-            setSearchTerm(''); // Clear search when sorting
-            setDebouncedFilterTechStack(''); // Clear debounced filter when sorting
+            setSearchTerm('');
+            setDebouncedFilterTechStack('');
+            setStatusFilter('');
           }}
           className={`sort-button ${sortOption === 'deadline' ? 'active' : ''}`}
         >
@@ -129,7 +205,7 @@ function JobList({ user, onJobChange, onJobSelected }) {
 
       {jobs.length === 0 && !isFetching && !initialLoading ? (
         <p>
-            {searchTerm || sortOption ?
+            {searchTerm || sortOption || statusFilter ?
                 "No job applications found matching your criteria. Try a different search!" :
                 "You haven't added any job applications yet."
             }

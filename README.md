@@ -152,7 +152,7 @@ Example structure:
 
 ## 6. Use Case Diagram(s)
 
-_(Insert your use case diagram(s) here. It should visually represent the user (Actor) and the main functions they can perform within the system (Use Cases).)_
+![Use Case Diagram](/frontend//resources//Use%20Case%20Diagram.png)
 
 **Key Use Cases:**
 
@@ -222,7 +222,7 @@ Here are detailed descriptions for some key use cases:
 
 ## 8. Class Diagram
 
-_(Insert your UML class diagram image here. It should include the main classes like `User`, `JobApplication`, `UserDAO`, `JobDAO`, `UserService`, `JobService` (if implemented), `UserController`, `JobController`, showing their attributes, methods, and relationships (e.g., `User` has a one-to-many relationship with `JobApplication`, services depend on DAOs, controllers depend on services).)_
+[Class Diagram](/frontend//resources/Class%20Diagram.png)
 
 **Key Classes:**
 
@@ -238,7 +238,9 @@ _(Insert your UML class diagram image here. It should include the main classes l
 
 ## 9. Sequence Diagrams
 
-_(Provide sequence diagrams for important use cases. You can create these using tools like PlantUML, Mermaid.js, or visual diagramming tools.)_
+[Sequence Diagram 01](/frontend//resources//Sequence%20Diagram%2001.png)
+[Sequence Diagram 02](/frontend//resources/Sequence%20Diagram%2002.png)
+[Sequence Diagram 02](/frontend//resources/Sequence%20Diagram%2003.png)
 
 **Example Sequence Diagram Description: User Registration**
 
@@ -279,7 +281,11 @@ _(Provide sequence diagrams for important use cases. You can create these using 
 
 ## 10. Screenshots
 
-_(Include relevant screenshots of your application's interface and features here: e.g., Login Page, Register Page, Dashboard with Job Form, Job List, Filter in action, Sorted List, Job Statistics component.)_
+[Screen 01](/frontend//resources/Screen%2001.jpg)
+[Screen 01](/frontend//resources/Screen%2002.jpg)
+[Screen 01](/frontend//resources/Screen%2003.jpg)
+[Screen 01](/frontend//resources/Screen%2004.jpg)
+[Screen 01](/frontend//resources/Screen%2005.jpg)
 
 ---
 
