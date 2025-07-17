@@ -105,8 +105,6 @@ The project follows a standard **Layered Architecture** (also known as N-tier ar
 
 ![System Architecture](/frontend/resources/System%20Architecture.png)
 
-Example structure:
-
 ### 5.3 Technologies Used
 
 -   **Backend:**
