@@ -11,34 +11,42 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Original job operations, adjusted to use the common base URL
+// Helper for authenticated requests (e.g., for userId in headers)
+const getConfig = (userId) => {
+    return userId ? { headers: { 'X-User-Id': userId } } : {};
+};
+
+// Job Application Endpoints
 export const fetchAllJobs = (userId) => api.get(`/jobs?userId=${userId}`);
 export const addJob = (job) => api.post('/jobs', job);
-export const deleteJob = (id) => api.delete(`/jobs/${id}`); // Correct, matches backend
 
-// --- New and Updated functions for user stories ---
+// Corrected deleteJob to send userId in header as required by backend
+export const deleteJob = (id, userId) => api.delete(`/jobs/${id}`, getConfig(userId));
 
-// 1. Filter jobs by tech stack
-// Corresponds to GET /api/jobs/filter?userId={userId}&techStack={techStack}
+// NEW: Update Job Function - Now Exported!
+// Corresponds to PUT /api/jobs/{id}
+export const updateJob = (job, userId) => {
+    // Backend expects id in path, job object in body, and userId in header
+    return api.put(`/jobs/${job.id}`, job, getConfig(userId));
+};
+
+export const getJobById = (id, userId) => {
+    return api.get(`/jobs/${id}`, getConfig(userId));
+};
+
+// Filtering, Sorting, and Stats Endpoints
 export const filterJobsByTechStack = (userId, techStack) => {
-  return api.get(`/jobs/filter`, { params: { userId, techStack } });
+    return api.get(`/jobs/filter`, { params: { userId, techStack } });
 };
 
-// 2. Sort applications by deadline
-// Corresponds to GET /api/jobs/sorted-by-deadline?userId={userId}
+export const filterJobsByStatus = (userId, status) => {
+    return api.get(`/jobs/filter`, { params: { userId, status } });
+};
+
 export const sortJobsByDeadline = (userId) => {
-  return api.get(`/jobs/sorted-by-deadline`, { params: { userId } });
+    return api.get(`/jobs/sorted-by-deadline`, { params: { userId } });
 };
 
-// 3. Get grouped stats
-// Corresponds to GET /api/jobs/stats?userId={userId}
 export const getJobStats = (userId) => {
-  return api.get(`/jobs/stats`, { params: { userId } });
+    return api.get(`/jobs/stats`, { params: { userId } });
 };
-
-// --- Removed/Obsolete functions from your old file ---
-// The following functions are removed because their corresponding backend endpoints
-// no longer exist or have been replaced by the new, more specific endpoints.
-// export const filterByStatus = (status) => axios.get(`${API_BASE}/status/${status}`);
-// export const sortByDeadline = () => axios.get(`${API_BASE}/sorted`); // Replaced by sortJobsByDeadline
-// export const groupByStatus = () => axios.get(`${API_BASE}/grouped`); // Replaced by getJobStats

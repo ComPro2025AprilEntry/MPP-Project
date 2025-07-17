@@ -1,8 +1,9 @@
+// frontend/src/components/jobList.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAllJobs, deleteJob, filterJobsByTechStack, sortJobsByDeadline } from '../api/jobApi';
 import { toast } from 'react-toastify';
 
-function JobList({ user, onJobChange }) {
+function JobList({ user, onJobChange, onJobSelected }) {
   const [jobs, setJobs] = useState([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -13,6 +14,17 @@ function JobList({ user, onJobChange }) {
 
   const userId = user?.id;
 
+  // Effect for debouncing the tech stack filter
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilterTechStack(searchTerm);
+    }, 500); // 500ms debounce
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
   const loadJobs = useCallback(async () => {
     if (!userId) {
       setInitialLoading(false);
@@ -21,13 +33,14 @@ function JobList({ user, onJobChange }) {
     }
 
     if (jobs.length === 0 && !initialLoading && !isFetching) {
-        setInitialLoading(true);
+      setInitialLoading(true);
     }
     setIsFetching(true);
     setError('');
 
     try {
       let response;
+      // Filter takes precedence over sort if both are active
       if (debouncedFilterTechStack) {
         response = await filterJobsByTechStack(userId, debouncedFilterTechStack);
       } else if (sortOption === 'deadline') {
@@ -44,67 +57,63 @@ function JobList({ user, onJobChange }) {
       setInitialLoading(false);
       setIsFetching(false);
     }
-  }, [userId, debouncedFilterTechStack, sortOption, initialLoading, isFetching, jobs.length]);
+  }, [userId, initialLoading, isFetching, jobs.length, debouncedFilterTechStack, sortOption]);
 
   useEffect(() => {
     loadJobs();
   }, [loadJobs]);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedFilterTechStack(searchTerm);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
-
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this job application?')) {
+    if (window.confirm("Are you sure you want to delete this job application?")) {
       try {
-        await deleteJob(id);
-        toast.success('Job deleted successfully!');
-        onJobChange();
+        await deleteJob(id, userId); // Ensure userId is passed for the header
+        toast.success("Job application deleted successfully!");
+        onJobChange(); // Notify App.js to refresh lists/stats
       } catch (err) {
-        console.error('Error deleting job:', err);
-        toast.error('Failed to delete job.');
+        console.error("Error deleting job:", err);
+        toast.error("Failed to delete job application.");
       }
     }
   };
 
-  // --- Render Logic Changes ---
+  // Status colors for better visual appeal
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Applied': return '#A3D9FF';       // Soft Light Blue
+      case 'Interviewing': return '#FFECB3';  // Soft Light Amber/Yellow
+      case 'Offer': return '#C8E6C9';         // Soft Light Green
+      case 'Rejected': return '#FFC9C9';      // Soft Light Red/Pink
+      case 'Accepted': return '#5cb85c';      // Reusing --secondary-green from App.css for a definitive success
+      default: return '#D3D3D3';             // Light Grey
+    }
+  };
+
   if (initialLoading) {
-      return <p>Loading jobs for the first time...</p>;
+    return <div className="job-list-container">Loading job applications...</div>;
   }
 
-  // Error message can be displayed permanently or as a toast
-  // For persistent display, keep this. For toast-only, remove this block.
   if (error) {
-      return <p className="error-message">{error}</p>;
+    return <div className="job-list-container error-message">{error}</div>;
   }
 
   return (
     <div className="job-list-container">
-      <h2>Your Applications</h2>
+      <h3>Your Job Applications</h3>
 
-      {/* FILTER AND SORT CONTROLS - ALWAYS RENDER THESE */}
+      {/* Filter and Sort Controls */}
       <div className="job-controls">
         <input
           type="text"
-          placeholder="Filter by Tech Stack (e.g., React, Java)"
+          placeholder="Filter by Tech Stack..."
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setSortOption('');
-          }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="filter-input"
         />
         <button
           onClick={() => {
             setSortOption(sortOption === 'deadline' ? '' : 'deadline');
-            setSearchTerm('');
-            setDebouncedFilterTechStack('');
+            setSearchTerm(''); // Clear search when sorting
+            setDebouncedFilterTechStack(''); // Clear debounced filter when sorting
           }}
           className={`sort-button ${sortOption === 'deadline' ? 'active' : ''}`}
         >
@@ -112,26 +121,33 @@ function JobList({ user, onJobChange }) {
         </button>
       </div>
 
-      {/* Conditional Spinner/Overlay when fetching, without hiding existing content */}
       {isFetching && (
         <div className="loading-overlay">
           <div className="spinner"></div>
         </div>
       )}
 
-      {/* Display the job list or the "No applications" message conditionally */}
-      {jobs.length === 0 && !isFetching && !initialLoading ? ( // Only show this if no jobs AND not currently fetching AND not initial loading
-        <p>No job applications found matching your criteria. Try a different search!</p>
+      {jobs.length === 0 && !isFetching && !initialLoading ? (
+        <p>
+            {searchTerm || sortOption ?
+                "No job applications found matching your criteria. Try a different search!" :
+                "You haven't added any job applications yet."
+            }
+        </p>
       ) : (
         <div className="job-list">
           {jobs.map(job => (
             <div key={job.id} className="job-card">
-              <h3>{job.company} - {job.position}</h3>
-              <p><strong>Tech Stack:</strong> {job.techStack && job.techStack.length > 0 ? job.techStack.join(', ') : 'N/A'}</p>
-              <p><strong>Applied Date:</strong> {job.appliedDate}</p>
-              <p><strong>Deadline:</strong> {job.deadline || 'N/A'}</p>
-              <p><strong>Status:</strong> {job.status}</p>
-              <button onClick={() => handleDelete(job.id)}>Delete</button>
+              <div className="job-card-header">
+                <h4 className="job-title">{job.position}</h4>
+                <span className="job-status" style={{ backgroundColor: getStatusColor(job.status) }}>{job.status}</span>
+              </div>
+              <p className="job-company">{job.company}</p>
+              <p className="job-deadline">Deadline: {job.deadline || 'N/A'}</p>
+              <div className="job-card-actions">
+                <button onClick={() => onJobSelected(job)} className="view-edit-button">View/Edit</button>
+                <button onClick={() => handleDelete(job.id)} className="delete-button">Delete</button>
+              </div>
             </div>
           ))}
         </div>

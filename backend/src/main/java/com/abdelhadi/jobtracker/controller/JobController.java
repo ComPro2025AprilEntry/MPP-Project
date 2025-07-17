@@ -20,9 +20,24 @@ public class JobController {
         this.jobService = jobService;
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<JobApplication> getJobById(
+            @PathVariable String id,
+            @RequestHeader("X-User-Id") String userId) {
+        return jobService.getJobById(id, userId)
+                .map(job -> new ResponseEntity<>(job, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
     @GetMapping
     public List<JobApplication> getAllJobs(@RequestParam String userId) {
         return jobService.getAllJobs(userId);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<JobApplication> updateJob(@PathVariable String id, @RequestBody JobApplication job, @RequestHeader("X-User-Id") String userId) {
+        job.setId(id); // Ensure the ID from the path is used
+        return new ResponseEntity<>(jobService.updateJob(job, userId), HttpStatus.OK);
     }
 
     @PostMapping
@@ -36,47 +51,29 @@ public class JobController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteJob(@PathVariable String id) {
-        jobService.removeJob(id);
+    public ResponseEntity<Void> deleteJob(@PathVariable String id, @RequestHeader("X-User-Id") String userId) {
+        jobService.removeJob(id, userId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     // --- New Endpoints for User Stories ---
 
-    // 1. Filter jobs by tech stack
+    // Combined endpoint for filtering (by tech stack, status) and sorting
     // Example: GET /api/jobs/filter?userId=user123&techStack=React
+    // Example: GET /api/jobs/filter?userId=user123&status=Applied
+    // Example: GET /api/jobs/filter?userId=user123&sortBy=deadline
     @GetMapping("/filter")
     public List<JobApplication> filterJobs(
             @RequestParam String userId,
             @RequestParam(required = false) String techStack,
-            @RequestParam(required = false) String status, // Re-add status filter if needed from previous comments
-            @RequestParam(required = false) String sortBy) { // Use sortBy for combined sorting
-
-        List<JobApplication> jobs;
-
+            @RequestParam(required = false) String status) {
         if (techStack != null && !techStack.isEmpty()) {
-            jobs = jobService.filterJobsByTechStack(userId, techStack);
-        } else if (status != null && !status.isEmpty()) { // Assuming you might have had this
-            // This method doesn't exist in JobService anymore,
-            // so you'd need to re-implement or adapt.
-            // For now, if no techStack, it will just load all or handle other filters.
-            // Let's ensure JobService has a filterByStatus or we remove it from here.
-            // Given the request, focus on techStack. If status filter is needed,
-            // it should be an additional parameter in filterJobs or a separate endpoint.
-            jobs = jobService.getAllJobs(userId); // Fallback to all if other filters are complex
+            return jobService.filterJobsByTechStack(userId, techStack);
+        } else if (status != null && !status.isEmpty()) {
+            return jobService.filterJobsByStatus(userId, status);
+        } else {
+            return jobService.getAllJobs(userId); // If no filter is applied, return all jobs
         }
-        else {
-            jobs = jobService.getAllJobs(userId);
-        }
-
-        if ("deadline".equalsIgnoreCase(sortBy)) {
-            jobs = jobService.sortJobsByDeadline(userId); // This will re-query, could be optimized
-        }
-        // If sorting needs to be applied *after* filtering, you'd do it on the 'jobs' list in Java
-        // like: jobs.sort(Comparator.comparing(JobApplication::getDeadline));
-        // But for now, we'll delegate to the DAO for sorting.
-
-        return jobs;
     }
 
     // Dedicated endpoint for sorting by deadline

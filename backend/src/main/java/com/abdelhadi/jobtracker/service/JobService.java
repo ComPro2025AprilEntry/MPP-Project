@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service; // Import @Service
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service // Mark as a Spring Service
@@ -25,12 +26,23 @@ public class JobService {
         jobDAO.save(job); // Save individual job
     }
 
-    public void removeJob(String id) {
-        jobDAO.deleteById(id);
+    public void removeJob(String id, String userId) {
+        jobDAO.deleteById(id, userId);
     }
 
     public List<JobApplication> getAllJobs(String userId) {
         return jobDAO.loadAll(userId);
+    }
+
+    public Optional<JobApplication> getJobById(String id, String userId) {
+        return jobDAO.findById(id, userId);
+    }
+
+    public JobApplication updateJob(JobApplication job, String userId) {
+        // Ensure the job's userId matches the authenticated userId for security
+        job.setUserId(userId);
+        jobDAO.save(job); // MERGE INTO handles update if ID exists
+        return job;
     }
 
     // --- New Service Methods for User Stories ---
@@ -43,6 +55,11 @@ public class JobService {
     // 2. Sort applications by deadline
     public List<JobApplication> sortJobsByDeadline(String userId) {
         return jobDAO.sortByDeadline(userId);
+    }
+
+    // New: Filter jobs by status
+    public List<JobApplication> filterJobsByStatus(String userId, String status) {
+        return jobDAO.filterByStatus(userId, status);
     }
 
     // 3. Get grouped stats

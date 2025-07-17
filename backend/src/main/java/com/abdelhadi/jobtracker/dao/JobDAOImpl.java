@@ -5,30 +5,52 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.DataSource; // Import DataSource
+// import javax.sql.DataSource; // Remove this import as DataSource is no longer directly used in constructor
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.HashMap;
 
 @Repository // Mark as a Spring Data Repository
 public class JobDAOImpl implements JobDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
-    // Constructor for Dependency Injection
-    public JobDAOImpl(DataSource dataSource) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
-        initializeTable(); // Call initialization method
+    private final RowMapper<JobApplication> jobRowMapper = new RowMapper<JobApplication>() {
+        @Override
+        public JobApplication mapRow(ResultSet rs, int rowNum) throws SQLException {
+            String techStackString = rs.getString("tech_stack");
+            List<String> techStackList = (techStackString != null && !techStackString.isEmpty()) ?
+                    Arrays.asList(techStackString.split(",")) :
+                    List.of(); // Use List.of() for immutable empty list
+
+            return new JobApplication(
+                    rs.getString("id"),
+                    rs.getString("company"),
+                    rs.getString("position"),
+                    techStackList,
+                    rs.getObject("applied_date", LocalDate.class),
+                    rs.getObject("deadline", LocalDate.class),
+                    rs.getString("status"),
+                    rs.getString("user_id")
+            );
+        }
+    };
+
+    // Constructor for Dependency Injection - MODIFIED
+    public JobDAOImpl(JdbcTemplate jdbcTemplate) { // Accept JdbcTemplate directly
+        this.jdbcTemplate = jdbcTemplate; // Assign the directly injected JdbcTemplate
+        initializeTable(); // Call initialization method (ensure this doesn't cause issues in tests if it tries to execute SQL against a mocked JdbcTemplate)
     }
 
-    private void initializeTable() {
+    public void initializeTable() {
         // Create the applications table if it doesn't exist
+        // In a unit test with a mocked JdbcTemplate, this `execute` call would typically be mocked
+        // or ignored, as there's no real database to create a table on.
+        // If this causes issues, you might need to mock jdbcTemplate.execute(anyString())
+        // in your JobDAOImplTest's @BeforeEach setup.
         jdbcTemplate.execute("""
             CREATE TABLE IF NOT EXISTS applications (
                 id VARCHAR(255) PRIMARY KEY,
@@ -43,7 +65,7 @@ public class JobDAOImpl implements JobDAO {
             """);
     }
 
-    // RowMapper for JobApplication objects
+    // RowMapper for JobApplication objects (retained for clarity, though jobRowMapper exists)
     private final RowMapper<JobApplication> jobApplicationRowMapper = (rs, rowNum) -> {
         try {
             return new JobApplication(
@@ -80,9 +102,16 @@ public class JobDAOImpl implements JobDAO {
     }
 
     @Override
-    public void deleteById(String id) {
-        String sql = "DELETE FROM applications WHERE id = ?";
-        jdbcTemplate.update(sql, id);
+    public void deleteById(String id, String userId) {
+        String sql = "DELETE FROM applications WHERE id = ? AND user_id = ?";
+        jdbcTemplate.update(sql, id, userId);
+    }
+
+    @Override
+    public Optional<JobApplication> findById(String id, String userId) {
+        String sql = "SELECT id, company, position, tech_stack, applied_date, deadline, status, user_id FROM applications WHERE id = ? AND user_id = ?";
+        List<JobApplication> jobs = jdbcTemplate.query(sql, jobRowMapper, id, userId);
+        return jobs.stream().findFirst();
     }
 
     @Override
@@ -95,9 +124,6 @@ public class JobDAOImpl implements JobDAO {
 
     @Override
     public List<JobApplication> filterByTechStack(String userId, String techStack) {
-        // Using ILIKE for partial match on comma-separated string.
-        // This is a simple solution. For more robust tech stack filtering,
-        // you might consider a separate 'job_tech_stack' many-to-many table.
         String sql = "SELECT * FROM applications WHERE user_id = ? AND techStack ILIKE ?";
         return jdbcTemplate.query(sql, jobApplicationRowMapper, userId, "%" + techStack + "%");
     }
@@ -105,7 +131,6 @@ public class JobDAOImpl implements JobDAO {
     @Override
     public List<JobApplication> sortByDeadline(String userId) {
         String sql = "SELECT * FROM applications WHERE user_id = ? ORDER BY deadline ASC NULLS LAST";
-        // NULLS LAST ensures jobs with no deadline are at the end
         return jdbcTemplate.query(sql, jobApplicationRowMapper, userId);
     }
 
@@ -121,5 +146,18 @@ public class JobDAOImpl implements JobDAO {
             stats.put(status, count);
         }
         return stats;
+    }
+
+    @Override
+    public List<JobApplication> filterByStatus(String userId, String status) {
+        String sql = "SELECT id, company, position, tech_stack, applied_date, deadline, status, user_id FROM applications WHERE user_id = ? AND status = ?";
+        return jdbcTemplate.query(sql, jobRowMapper, userId, status);
+    }
+
+    @Override
+    public int calculateTotalApplications(String userId) {
+        String sql = "SELECT COUNT(*) FROM applications WHERE user_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId);
+        return (count != null) ? count : 0;
     }
 }

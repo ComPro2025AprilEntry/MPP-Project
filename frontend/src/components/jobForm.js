@@ -1,25 +1,49 @@
-// frontend/src/components/JobForm.js
-import React, { useState, useEffect } from 'react';
-import { addJob } from '../api/jobApi';
+// frontend/src/components/jobForm.js
+import React, { useState, useEffect, useMemo } from 'react'; // Import useMemo
+import { addJob, updateJob } from '../api/jobApi'; // Ensure updateJob is imported
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from 'react-toastify'; // Import toast
+import { toast } from 'react-toastify';
 
-function JobForm({ user, onJobAdd }) {
-  const initialFormState = {
-    company: '',
-    position: '',
-    techStack: '',
-    appliedDate: '',
-    deadline: '',
-    status: 'Applied',
-    userId: user?.id || ''
-  };
+// Add jobToEdit and onJobEditComplete to props
+function JobForm({ user, onJobAdd, jobToEdit, onJobEditComplete }) {
+  // Use useMemo to memoize initialFormState based on jobToEdit
+  const initialFormState = useMemo(() => {
+    return jobToEdit ? {
+      id: jobToEdit.id,
+      company: jobToEdit.company || '',
+      position: jobToEdit.position || '',
+      // Ensure techStack is a comma-separated string for the input
+      techStack: Array.isArray(jobToEdit.techStack) ? jobToEdit.techStack.join(', ') : (jobToEdit.techStack || ''),
+      appliedDate: jobToEdit.appliedDate || '',
+      deadline: jobToEdit.deadline || '',
+      status: jobToEdit.status || 'Applied',
+      userId: jobToEdit.userId // Use existing userId from jobToEdit
+    } : { // Default state for adding a new job
+      company: '',
+      position: '',
+      techStack: '',
+      appliedDate: '',
+      deadline: '',
+      status: 'Applied',
+      userId: user?.id || '' // Use user.id for new jobs
+    };
+  }, [jobToEdit, user]); // Dependencies for useMemo
+
   const [form, setForm] = useState(initialFormState);
   const [error, setError] = useState('');
 
+  // Update form state when jobToEdit changes (entering/exiting edit mode)
   useEffect(() => {
-    setForm(prevForm => ({ ...prevForm, userId: user?.id || '' }));
-  }, [user]);
+    setForm(initialFormState);
+  }, [initialFormState]); // Depend on initialFormState which is memoized
+
+  // Ensure userId is set on form for new jobs if user loads after component mounts
+  useEffect(() => {
+    if (!jobToEdit && user?.id && form.userId !== user.id) {
+        setForm(prevForm => ({ ...prevForm, userId: user.id }));
+    }
+  }, [user, jobToEdit, form.userId]);
+
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -32,41 +56,48 @@ function JobForm({ user, onJobAdd }) {
 
     if (!user?.id) {
       setError('User not logged in.');
-      toast.error('Please log in to add a job.'); // Use toast for error
+      toast.error('Please log in to add/update a job.');
       return;
     }
 
     if (!form.company || !form.position || !form.appliedDate || !form.status) {
       setError('Company, position, applied date, and status are required.');
-      toast.error('Please fill in all required fields.'); // Use toast for error
+      toast.error('Please fill in all required fields.');
       return;
     }
 
     const techStackList = form.techStack.split(',').map(s => s.trim()).filter(s => s);
 
     try {
-      const jobToSend = {
-        ...form,
-        id: uuidv4(),
-        techStack: techStackList,
-        appliedDate: form.appliedDate || null,
-        deadline: form.deadline || null,
-        userId: user.id
-      };
-      await addJob(jobToSend);
-      toast.success('Job application added successfully!'); // Use toast for success
-      setForm(initialFormState);
-      onJobAdd();
+      if (jobToEdit) { // If jobToEdit exists, it's an update operation
+        const updatedJob = { ...form, techStack: techStackList, userId: user.id }; // Ensure correct userId
+        await updateJob(updatedJob, user.id); // Pass updatedJob and userId
+        toast.success('Job application updated successfully!');
+        onJobEditComplete(); // Notify App.js that edit is complete (will refresh lists/stats)
+      } else { // Otherwise, it's an add operation
+        const jobToSend = {
+          ...form,
+          id: uuidv4(), // Generate new ID for new jobs
+          techStack: techStackList,
+          appliedDate: form.appliedDate || null,
+          deadline: form.deadline || null,
+          userId: user.id // Ensure userId is set for new jobs
+        };
+        await addJob(jobToSend);
+        toast.success('Job application added successfully!');
+        setForm(initialFormState); // Reset form for new entry
+        onJobAdd(); // Notify App.js that a new job was added
+      }
     } catch (err) {
-      console.error('Error adding job:', err);
-      setError('Failed to add job application. Please try again.');
-      toast.error('Failed to add job application.'); // Use toast for error
+      console.error('Error adding/updating job:', err);
+      setError('Failed to process job application. Please try again.');
+      toast.error('Failed to process job application.');
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="job-form">
-      <h2>Add New Application</h2>
+      <h2>{jobToEdit ? 'Edit Application' : 'Add New Application'}</h2>
       <input
         name="company"
         placeholder="Company"
@@ -109,8 +140,13 @@ function JobForm({ user, onJobAdd }) {
         <option value="Rejected">Rejected</option>
         <option value="Accepted">Accepted</option>
       </select><br />
-      {error && <p className="error-message">{error}</p>} {/* Keep in-component error for form validation */}
-      <button type="submit">Add Job</button>
+      {error && <p className="error-message">{error}</p>}
+      <button type="submit">{jobToEdit ? 'Update Job' : 'Add Job'}</button>
+      {jobToEdit && ( // Show cancel button only in edit mode
+        <button type="button" onClick={onJobEditComplete} className="cancel-button">
+          Cancel
+        </button>
+      )}
     </form>
   );
 }
