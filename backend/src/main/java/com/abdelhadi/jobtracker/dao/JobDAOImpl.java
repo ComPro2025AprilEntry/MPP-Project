@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository // Mark as a Spring Data Repository
 public class JobDAOImpl implements JobDAO {
@@ -159,5 +158,16 @@ public class JobDAOImpl implements JobDAO {
         String sql = "SELECT COUNT(*) FROM applications WHERE user_id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId);
         return (count != null) ? count : 0;
+    }
+
+    @Override
+    public List<JobApplication> findByUserIdAndStatus(Long userId, String status) {
+        return List.of();
+    }
+
+    @Override
+    public List<JobApplication> findByUserIdAndStatus(String userId, String status) {
+        String sql = "SELECT id, company, position, tech_stack, applied_date, deadline, status, user_id FROM applications WHERE user_id = ? AND status = ?";
+        return jdbcTemplate.query(sql, jobRowMapper, userId, status);
     }
 }

@@ -92,8 +92,6 @@ The system is designed to meet the following user needs:
 
 ## 5. Architecture of Project
 
-![System Architecture](/frontend/resources/System%20Architecture.png)
-
 ### 5.1 Overview
 
 The project follows a standard **Layered Architecture** (also known as N-tier architecture), separating concerns into distinct logical layers. This promotes modularity, maintainability, and scalability.
@@ -105,7 +103,7 @@ The project follows a standard **Layered Architecture** (also known as N-tier ar
 
 ### 5.2 Architecture Diagram
 
-_(Insert a diagram here illustrating a typical 3-tier architecture with Client (React), Backend (Spring Boot with Controller, Service, DAO), and Database (H2). You can use tools like draw.io, Lucidchart, or Diagrams.net to create this. A conceptual diagram similar to the O'Reilly one you linked, but specific to your components, would be ideal.)_
+![System Architecture](/frontend/resources/System%20Architecture.png)
 
 Example structure:
 

@@ -18,4 +18,7 @@ public interface JobDAO {
     Map<String, Long> getJobStatsByStatus(String userId);
     List<JobApplication> filterByStatus(String userId, String status);
     int calculateTotalApplications(String userId);
+    List<JobApplication> findByUserIdAndStatus(Long userId, String status);
+
+    List<JobApplication> findByUserIdAndStatus(String userId, String status);
 }

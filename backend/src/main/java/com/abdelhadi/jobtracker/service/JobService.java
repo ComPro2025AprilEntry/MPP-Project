@@ -67,6 +67,10 @@ public class JobService {
         return jobDAO.getJobStatsByStatus(userId);
     }
 
+    public List<JobApplication> getApplicationsByStatus(Long userId, String status) {
+        return jobDAO.findByUserIdAndStatus(userId, status);
+    }
+
     // The saveAll method from previous version is removed as individual save is handled
     // within addJob now, and deleteJob also directly uses DAO.
 }
